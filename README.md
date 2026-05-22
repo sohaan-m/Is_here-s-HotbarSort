@@ -5,6 +5,11 @@ A client-side Fabric Minecraft mod designed to sort and synchronize your hotbar.
 
 > **Development Status:** I am still actively developing this mod! Many more amazing features are to come. 🚀
 
+
+# 📝Guide ~
+* The default keybinds are O for saving a hotbar and P for loading it.
+* If you are missing some items it leaves the slot as is.
+* You may find the keybinds in the misc section of controls.
 ---
 
 ## ✨ Features ~
