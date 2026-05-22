@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "hotbarsort",
+	"version": "${version}",
+	"name": "HotbarSort",
+	"description": "Sort your inventory and save hotbar loadouts with a keybind or command.",
+	"authors": [
+		"Is_here"
+	],
+	"contact": {
+		"sources": "https://github.com/YourNameHere/HotbarSort"
+	},
+	"license": "MIT",
+	"icon": "assets/hotbarsort/icon.png",
+	"environment": "*",
+
+	"entrypoints": {
+		"main": [
+			"com.hotbarsort.HotbarSort"
+		],
+		"client": [
+			"com.hotbarsort.client.HotbarSortClient"
+		],
+		"modmenu": [
+			"com.hotbarsort.client.ModMenuIntegration"
+		]
+	},
+
+	"depends": {
+		"fabricloader": ">=0.18.2",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
