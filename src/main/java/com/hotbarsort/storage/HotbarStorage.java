@@ -14,8 +14,14 @@ public class HotbarStorage {
     private static boolean isSortingActive = false;
     private static int currentTargetHotbarSlot = 0;
 
-    public static void saveHotbar() {
-        MinecraftClient client = MinecraftClient.getInstance();
+    private static void sendMinimalChatMessage(MinecraftClient client, String message) {
+        if (client.player != null) {
+            // Prints a local, non-server gray chat message that fades naturally
+            client.player.sendMessage(Text.literal("§8[HotbarSort] §7" + message), false);
+        }
+    }
+
+    public static void saveHotbar(MinecraftClient client) {
         if (client.player == null) return;
 
         var inv = client.player.getInventory();
@@ -25,27 +31,26 @@ public class HotbarStorage {
             saved[i] = stack.isEmpty() ? ItemStack.EMPTY : new ItemStack(stack.getItem());
         }
 
-        client.player.sendMessage(Text.literal("Hotbar Saved"), false);
+        sendMinimalChatMessage(client, "Hotbar layout saved.");
     }
 
-    public static void startSorting() {
-        MinecraftClient client = MinecraftClient.getInstance();
+    public static void startSorting(MinecraftClient client) {
         if (client.player == null) return;
 
         if (saved[0] == null) {
-            client.player.sendMessage(Text.literal("No hotbar saved"), false);
+            sendMinimalChatMessage(client, "No configuration saved.");
             return;
         }
 
         if (client.player.currentScreenHandler != client.player.playerScreenHandler) {
-            client.player.sendMessage(Text.literal("Close inventory before sorting"), false);
+            sendMinimalChatMessage(client, "Close inventory before starting.");
             return;
         }
 
         isSortingActive = true;
         currentTargetHotbarSlot = 0;
         delayTimer = 0;
-        client.player.sendMessage(Text.literal("Sorting started..."), false);
+        sendMinimalChatMessage(client, "Sorting started...");
     }
 
     public static void tickSortingSystem() {
@@ -59,7 +64,7 @@ public class HotbarStorage {
 
         if (client.player.currentScreenHandler != client.player.playerScreenHandler) {
             isSortingActive = false;
-            client.player.sendMessage(Text.literal("Sorting canceled: Menu opened"), false);
+            sendMinimalChatMessage(client, "Sorting canceled: Menu opened.");
             return;
         }
 
@@ -119,6 +124,6 @@ public class HotbarStorage {
         }
 
         isSortingActive = false;
-        player.sendMessage(Text.literal("Hotbar Sorted"), false);
+        sendMinimalChatMessage(client, "Hotbar sorted successfully.");
     }
 }

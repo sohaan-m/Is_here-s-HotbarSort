@@ -1,5 +1,6 @@
 package com.hotbarsort.client;
 
+import com.hotbarsort.config.HotbarConfig;
 import com.hotbarsort.storage.HotbarStorage;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -15,7 +16,7 @@ public class HotbarSortClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        com.hotbarsort.config.HotbarConfig.HANDLER.load();
+        HotbarConfig.HANDLER.load();
 
         System.out.println("HotbarSort loaded!");
 
@@ -40,18 +41,22 @@ public class HotbarSortClient implements ClientModInitializer {
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-
-            while (saveKey.wasPressed()) {
-                HotbarStorage.saveHotbar();
+            if (!HotbarConfig.isEnabled()) {
+                saveKey.setPressed(false);
+                sortKey.setPressed(false);
+                return;
             }
 
-            while (sortKey.wasPressed()) {
-                // Instantiates the sorting safety parameters and tracks position
-                HotbarStorage.startSorting();
+            if (saveKey.wasPressed()) {
+                HotbarStorage.saveHotbar(client);
+                while (saveKey.wasPressed()) {}
             }
 
-            // CRITICAL: This method must execute every single client tick
-            // to count down your slider delay timers and process inventory moves!
+            if (sortKey.wasPressed()) {
+                HotbarStorage.startSorting(client);
+                while (sortKey.wasPressed()) {}
+            }
+
             HotbarStorage.tickSortingSystem();
         });
     }
