@@ -11,7 +11,7 @@
 		"sources": "https://github.com/YourNameHere/HotbarSort"
 	},
 	"license": "MIT",
-	"icon": "assets/hotbarsort/lang/icon.png",
+	"icon": "assets/hotbarsort/icon.png",
 	"environment": "*",
 
 	"entrypoints": {
