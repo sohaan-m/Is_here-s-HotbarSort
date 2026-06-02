@@ -3,26 +3,23 @@
 	"id": "hotbarsort",
 	"version": "${version}",
 	"name": "HotbarSort",
-	"description": "Sort your inventory and save hotbar loadouts with a keybind or command.",
+	"description": "Sort your inventory and save hotbar loadouts with a command.",
 	"authors": [
 		"Is_here"
 	],
 	"contact": {
-		"sources": "https://github.com/YourNameHere/HotbarSort"
+		"sources": ""
 	},
 	"license": "MIT",
 	"icon": "assets/hotbarsort/icon.png",
-	"environment": "*",
+	"environment": "client",
 
 	"entrypoints": {
-		"main": [
-			"com.hotbarsort.HotbarSort"
-		],
 		"client": [
 			"com.hotbarsort.client.HotbarSortClient"
 		],
 		"modmenu": [
-			"com.hotbarsort.client.ModMenuIntegration"
+			"com.hotbarsort.client.HotbarSortModMenu"
 		]
 	},
 

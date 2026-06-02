@@ -3,68 +3,49 @@ package com.hotbarsort.storage;
 import com.hotbarsort.config.HotbarConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 
 public class HotbarStorage {
 
-    private static final ItemStack[] saved = new ItemStack[9];
-
-    private static int delayTimer = 0;
+    private static ItemStack[] activeSortingLayout = null;
     private static boolean isSortingActive = false;
     private static int currentTargetHotbarSlot = 0;
+    private static int delayTimer = 0;
 
-    private static void sendMinimalChatMessage(MinecraftClient client, String message) {
-        if (client.player != null) {
-            // Prints a local, non-server gray chat message that fades naturally
-            client.player.sendMessage(Text.literal("§8[HotbarSort] §7" + message), false);
-        }
-    }
-
-    public static void saveHotbar(MinecraftClient client) {
-        if (client.player == null) return;
-
-        var inv = client.player.getInventory();
-
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = inv.getStack(i);
-            saved[i] = stack.isEmpty() ? ItemStack.EMPTY : new ItemStack(stack.getItem());
-        }
-
-        sendMinimalChatMessage(client, "Hotbar layout saved.");
-    }
-
-    public static void startSorting(MinecraftClient client) {
-        if (client.player == null) return;
-
-        if (saved[0] == null) {
-            sendMinimalChatMessage(client, "No configuration saved.");
-            return;
-        }
+    public static void startSorting(MinecraftClient client, ItemStack[] targetLayout) {
+        if (client.player == null || targetLayout == null) return;
 
         if (client.player.currentScreenHandler != client.player.playerScreenHandler) {
-            sendMinimalChatMessage(client, "Close inventory before starting.");
             return;
         }
 
+        activeSortingLayout = targetLayout;
         isSortingActive = true;
         currentTargetHotbarSlot = 0;
         delayTimer = 0;
-        sendMinimalChatMessage(client, "Sorting started...");
+    }
+
+    public static boolean isSorting() {
+        return isSortingActive;
+    }
+
+    public static void cancelSorting() {
+        isSortingActive = false;
+        activeSortingLayout = null;
     }
 
     public static void tickSortingSystem() {
-        if (!isSortingActive) return;
+        if (!isSortingActive || activeSortingLayout == null) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.interactionManager == null) {
-            isSortingActive = false;
+            cancelSorting();
             return;
         }
 
         if (client.player.currentScreenHandler != client.player.playerScreenHandler) {
-            isSortingActive = false;
-            sendMinimalChatMessage(client, "Sorting canceled: Menu opened.");
+            cancelSorting();
             return;
         }
 
@@ -78,8 +59,7 @@ public class HotbarStorage {
         var inv = player.getInventory();
 
         while (currentTargetHotbarSlot < 9) {
-            ItemStack target = saved[currentTargetHotbarSlot];
-            int targetScreenSlot = 36 + currentTargetHotbarSlot;
+            ItemStack target = activeSortingLayout[currentTargetHotbarSlot];
 
             if (target == null || target.isEmpty() || inv.getStack(currentTargetHotbarSlot).getItem() == target.getItem()) {
                 currentTargetHotbarSlot++;
@@ -109,21 +89,27 @@ public class HotbarStorage {
             }
 
             if (found) {
-                im.clickSlot(player.playerScreenHandler.syncId, sourceScreenSlot, 0, SlotActionType.PICKUP, player);
-                im.clickSlot(player.playerScreenHandler.syncId, targetScreenSlot, 0, SlotActionType.PICKUP, player);
-                if (!player.currentScreenHandler.getCursorStack().isEmpty()) {
-                    im.clickSlot(player.playerScreenHandler.syncId, sourceScreenSlot, 0, SlotActionType.PICKUP, player);
-                }
+                im.clickSlot(
+                        player.playerScreenHandler.syncId,
+                        sourceScreenSlot,
+                        currentTargetHotbarSlot,
+                        SlotActionType.SWAP,
+                        player
+                );
 
-                delayTimer = HotbarConfig.getTickDelayRate();
+                delayTimer = HotbarConfig.INSTANCE.tickDelayRate;
                 currentTargetHotbarSlot++;
-                return;
+                return;git add .
             }
 
             currentTargetHotbarSlot++;
         }
 
-        isSortingActive = false;
-        sendMinimalChatMessage(client, "Hotbar sorted successfully.");
+        // THE FIX: Loop finished naturally, send the completion indicator!
+        if (client.player != null) {
+            client.player.sendMessage(Text.literal("§8[§fHotbarSort§8] §7Sorting complete."), false);
+        }
+
+        cancelSorting();
     }
 }

@@ -1,81 +1,74 @@
 package com.hotbarsort.config;
 
-import dev.isxander.yacl3.api.ConfigCategory;
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.OptionDescription;
-import dev.isxander.yacl3.api.YetAnotherConfigLib;
-import dev.isxander.yacl3.api.controller.BooleanControllerBuilder; // Imported for the ON/OFF button
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
-import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
-import dev.isxander.yacl3.config.v2.api.SerialEntry;
-import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
+import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class HotbarConfig {
-    public static class ConfigData {
-        @SerialEntry
-        public int tickDelayRate = 2; // Default delay between each item
+    public static HotbarConfig INSTANCE = new HotbarConfig();
 
-        @SerialEntry
-        public boolean enabled = true; // Your enabled variable is perfectly declared here!
+    // Creates a dedicated JSON file in your Minecraft config folder
+    private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("hotbarsort.json").toFile();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    public boolean enabled = true;
+    public int tickDelayRate = 2;
+
+    // The HashMap allows for infinite profiles tied to custom text strings!
+    public Map<String, List<String>> savedProfiles = new HashMap<>();
+
+    public static void load() {
+        if (CONFIG_FILE.exists()) {
+            try (FileReader reader = new FileReader(CONFIG_FILE)) {
+                INSTANCE = GSON.fromJson(reader, HotbarConfig.class);
+            } catch (Exception e) {
+                System.err.println("[HotbarSort] Failed to load configuration!");
+            }
+        }
+        // Safety check to ensure the map is never null on first boot
+        if (INSTANCE.savedProfiles == null) {
+            INSTANCE.savedProfiles = new HashMap<>();
+        }
     }
 
-    public static final ConfigClassHandler<ConfigData> HANDLER = ConfigClassHandler.createBuilder(ConfigData.class)
-            .id(net.minecraft.util.Identifier.of("hotbarsort", "config"))
-            .serializer(config -> GsonConfigSerializerBuilder.create(config)
-                    .setPath(FabricLoader.getInstance().getConfigDir().resolve("hotbarsort.json"))
-                    .build())
-            .build();
-
-    // Added a quick helper method so you can easily check if the mod is on elsewhere in your code
-    public static boolean isEnabled() {
-        return HANDLER.instance().enabled;
+    public static void save() {
+        try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
+            GSON.toJson(INSTANCE, writer);
+        } catch (Exception e) {
+            System.err.println("[HotbarSort] Failed to save configuration!");
+        }
     }
 
-    public static int getTickDelayRate() {
-        return HANDLER.instance().tickDelayRate;
-    }
-
-    public static Screen createConfigScreen(Screen parentScreen) {
+    public static Screen createScreen(Screen parent) {
         return YetAnotherConfigLib.createBuilder()
-                .title(Text.literal("Hotbar Sort Config"))
+                .title(Text.literal("HotbarSort Configuration"))
                 .category(ConfigCategory.createBuilder()
                         .name(Text.literal("General Settings"))
-
-                        // 1. Cleaned up and fixed your Boolean Toggle Option
-                        .option(Option.<Boolean>createBuilder() // Capital 'B' Boolean wrapper
-                                .name(Text.literal("Enable Or Disable The Mod"))
-                                .description(OptionDescription.of(Text.literal("Turns the mod off or on.")))
-                                .binding(
-                                        true, // Default state
-                                        () -> HANDLER.instance().enabled, // Read method
-                                        newVal -> HANDLER.instance().enabled = newVal // Write method
-                                )
-                                .controller(opt -> BooleanControllerBuilder.create(opt)
-                                        .valueFormatter(val -> val ? Text.literal("ON") : Text.literal("OFF"))
-                                        .coloured(true) // Makes ON green and OFF red!
-                                )
-                                .build()) // Nicely closed out the boolean option block
-
-                        // 2. Separated and cleaned up your Delay Slider Option
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Text.literal("Enable Mod"))
+                                .binding(true, () -> INSTANCE.enabled, val -> INSTANCE.enabled = val)
+                                .controller(TickBoxControllerBuilder::create)
+                                .build())
                         .option(Option.<Integer>createBuilder()
-                                .name(Text.literal("Delay Between Each Item"))
-                                .description(OptionDescription.of(Text.literal("Game ticks to wait between moving each individual item. 0 = instant, 20 = 1 second per item (9 seconds total).")))
-                                .binding(
-                                        2, // Default
-                                        () -> HANDLER.instance().tickDelayRate, // Read method
-                                        newVal -> HANDLER.instance().tickDelayRate = newVal // Write method
-                                )
-                                .controller(opt -> IntegerSliderControllerBuilder.create(opt)
-                                        .range(0, 20)
-                                        .step(1)
-                                )
+                                .name(Text.literal("Tick Delay Rate"))
+                                .binding(2, () -> INSTANCE.tickDelayRate, val -> INSTANCE.tickDelayRate = val)
+                                .controller(opt -> IntegerSliderControllerBuilder.create(opt).range(1, 20).step(1))
                                 .build())
                         .build())
-                .save(HANDLER::save)
+                .save(HotbarConfig::save) // Triggers disk save when UI is closed
                 .build()
-                .generateScreen(parentScreen);
+                .generateScreen(parent);
     }
 }

@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.14.7'
+	id 'fabric-loom' version '1.15.3'
 	id 'maven-publish'
 }
 
@@ -7,10 +7,13 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
+	mavenCentral()
+	maven { url "https://jitpack.io" }
 	maven { url "https://maven.fabricmc.net/" }
 	maven { url "https://maven.terraformersmc.com/releases" }
 	maven { url "https://maven.isxander.dev/releases" }
 	maven { url "https://maven.isxander.dev/snapshots" }
+	maven { url "https://maven.wispforest.io/releases/" }
 }
 
 loom {
@@ -29,6 +32,8 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	// Keep YACL and remove owo-lib entirely
 	modImplementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
 }
 
